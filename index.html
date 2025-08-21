@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ちいさいじゅんにたっぷしよう</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background-color: #f5f5f5;
+    }
+    #game {
+      margin: 20px auto;
+      width: 300px;
+      height: 300px;
+      position: relative;
+    }
+    .number {
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+      background: #4caf50;
+      color: white;
+      border-radius: 50%;
+      position: absolute;
+      text-align: center;
+      cursor: pointer;
+    }
+    #controls {
+      margin-top: 20px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    #timer, #best {
+      font-size: 18px;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>数字タップゲーム</h1>
+  <div id="game"></div>
+  <div id="timer">タイム: 0.00 秒</div>
+  <div id="best">ベストタイム: なし</div>
+  <div id="controls">
+    <button onclick="startGame()">スタート</button>
+    <button onclick="resetGame()">もういちど</button>
+    <button onclick="changeShape()">形を切り替え</button>
+  </div>
+
+  <script>
+    const game = document.getElementById("game");
+    const timerDisplay = document.getElementById("timer");
+    const bestDisplay = document.getElementById("best");
+    let numbers = [];
+    let nextNumber = 1;
+    let timer = 0;
+    let interval;
+    let gameStarted = false;
+    let bestTime = null;
+    let shape = 0; // 0: circle, 1: square, 2: star
+
+    function startGame() {
+      if (gameStarted) return;
+      timer = 0;
+      timerDisplay.textContent = "タイム: 0.00 秒";
+      interval = setInterval(() => {
+        timer += 0.01;
+        timerDisplay.textContent = `タイム: ${timer.toFixed(2)} 秒`;
+      }, 10);
+      gameStarted = true;
+    }
+
+    function resetGame() {
+      clearInterval(interval);
+      gameStarted = false;
+      nextNumber = 1;
+      timer = 0;
+      timerDisplay.textContent = "タイム: 0.00 秒";
+      generateNumbers();
+    }
+
+    function generateNumbers() {
+      game.innerHTML = "";
+      numbers = [...Array(10).keys()].map(n => n + 1);
+      shuffleArray(numbers);
+      const centerX = 150;
+      const centerY = 150;
+      const radius = 100;
+
+      numbers.forEach((num, i) => {
+        const div = document.createElement("div");
+        div.className = "number";
+        div.textContent = num;
+        let x, y;
+
+        if (shape === 0) {
+          // 円形配置
+          const angle = (i / numbers.length) * 2 * Math.PI;
+          x = centerX + radius * Math.cos(angle) - 20;
+          y = centerY + radius * Math.sin(angle) - 20;
+        } else if (shape === 1) {
+          // 四角配置（3列4行）
+          const cols = 3;
+          const row = Math.floor(i / cols);
+          const col = i % cols;
+          x = 50 + col * 80;
+          y = 50 + row * 60;
+        } else if (shape === 2) {
+          // 星型配置（ざっくり5点）
+          const starPoints = [
+            [150, 50],
+            [180, 130],
+            [240, 130],
+            [195, 180],
+            [210, 260],
+            [150, 210],
+            [90, 260],
+            [105, 180],
+            [60, 130],
+            [120, 130]
+          ];
+          x = starPoints[i][0] - 20;
+          y = starPoints[i][1] - 20;
+        }
+
+        div.style.left = `${x}px`;
+        div.style.top = `${y}px`;
+
+        div.onclick = () => {
+          if (!gameStarted) return;
+          if (num === nextNumber) {
+            div.style.visibility = "hidden";
+            nextNumber++;
+            if (nextNumber > 10) {
+              clearInterval(interval);
+              gameStarted = false;
+              if (bestTime === null || timer < bestTime) {
+                bestTime = timer;
+                bestDisplay.textContent = `ベストタイム: ${bestTime.toFixed(2)} 秒`;
+              }
+            }
+          }
+        };
+
+        game.appendChild(div);
+      });
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function changeShape() {
+      shape = (shape + 1) % 3;
+      generateNumbers();
+    }
+
+    // 初期化
+    generateNumbers();
+  </script>
+</body>
+</html>
